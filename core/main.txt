@@ -1,12 +1,12 @@
-var AAC = import Stonescript-mobile-/refs/head/core/logic/aac
-var C = import Stonescript-mobile-/refs/head/core/variables/constants
-var Colors = import Stonescript-mobile-/refs/head/core/utils/colors
-var Debuger = import Stonescript-mobile-/refs/head/observability/debugger
-var HashTable = import Stonescript-mobile-/refs/head/core/utils/hash-table
-var Potion = import Stonescript-mobile-/refs/head/core/logic/potion
-var SafeMean = import Stonescript-mobile-/refs/head/core/logic/safe-mean
-var Tracer = import Stonescript-mobile-/refs/head/observability/tracer
-var Unmake = import Stonescript-mobile-/refs/head/core/logic/unmake
+var AAC = import Stonescript-mobile-/refs/heads/core/logic/aac
+var C = import Stonescript-mobile-/refs/heads/core/variables/constants
+var Colors = import Stonescript-mobile-/refs/heads/core/utils/colors
+var Debuger = import Stonescript-mobile-/refs/heads/observability/debugger
+var HashTable = import Stonescript-mobile-/refs/heads/core/utils/hash-table
+var Potion = import Stonescript-mobile-/refs/heads/core/logic/potion
+var SafeMean = import Stonescript-mobile-/refs/heads/core/logic/safe-mean
+var Tracer = import Stonescript-mobile-/refs/heads/observability/tracer
+var Unmake = import Stonescript-mobile-/refs/heads/core/logic/unmake
 
 /*===================== PROGRESSION =====================*/
 func progress()
