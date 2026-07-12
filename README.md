@@ -4,7 +4,14 @@ Stonescript is a scripting language for [Stone Story RPG](https://store.steampow
 
 You can find the language manual [here](https://stonestoryrpg.com/stonescript/manual.html).
 
+## Mobile branch
+
+I'm seeing if I can rewrite the way it's importing so that stone story will accept it
+
+
 ## Credit
+
+- https://github.com/Fuzznimp For the original code
 
 Big thanks to:
 
