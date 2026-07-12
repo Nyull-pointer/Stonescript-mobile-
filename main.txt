@@ -1,8 +1,8 @@
-import Stonescript/refs/head/tracking/loop-time
-import Stonescript/refs/head/tracking/red-nosed-scotty
+import Stonescript-mobile-/refs/head/tracking/loop-time
+import Stonescript-mobile-/refs/head/tracking/red-nosed-scotty
 
-import Stonescript/refs/head/skins/wavy-scarf
-import Stonescript/refs/head/skins/shadow
-import Stonescript/refs/head/skins/pet-skully
+import Stonescript-mobile-/refs/head/skins/wavy-scarf
+import Stonescript-mobile-/refs/head/skins/shadow
+import Stonescript-mobile-/refs/head/skins/pet-skully
 
-import Stonescript/refs/head/core/main
+import Stonescript-mobile-/refs/head/core/main
