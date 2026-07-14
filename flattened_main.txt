@@ -1,0 +1,951 @@
+/* Flattened file generated from main.txt and its imports */
+
+/* --- Source: main.txt --- */
+/* Source: main.txt (imports inlined below) */
+
+
+/* ===== Begin: tracking/loop-time.txt ===== */
+// Heavily based on fruloo's script:
+// https://github.com/bcbays/SSRPGScripts/blob/main/Info/LoopTime.txt
+
+var color_grading = [
+  "#rainbow",
+  "#22FF22",
+  "#FF8822",
+  "#FF2222",
+  "#white",
+  "#7A8F93"
+]
+
+var x = screen.w - 23
+
+// ====== Time tracking ======
+var prev_time = -1
+var current_time = -1
+
+var location_colors = [
+  "#white",
+  "#cyan",
+  "#yellow",
+  "#green",
+  "#blue",
+  "#red"
+]
+
+?loc.stars >= 1 & !loc.isQuest
+  ?loc.begin | loc.loop
+    prev_time = current_time + 1
+    current_time = -1
+
+  // Location
+  var locationColor = location_colors[math.FloorToInt((loc.stars - 1)/5.0)]
+  >`@x@,1,@locationColor@,@loc.name@ @loc.stars@*
+
+  // Best
+  ?loc.bestTime >= 0
+    >`@x@,2,@color_grading[0]@,Best @time.FormatCasual(loc.bestTime,true)@ (@loc.bestTime@f)
+  :
+    >`@x@,2,@color_grading[5]@,Best -
+
+  // Mean
+  ?loc.averageTime >= 0
+    >`@x@,3,@color_grading[4]@,Mean @time.FormatCasual(loc.averageTime,true)@ (@loc.averageTime@f)
+  :
+    >`@x@,3,@color_grading[5]@,Mean -
+
+  // Previous
+  ?prev_time > 0
+    >`@x@,4,@color_grading[4]@,Prev @time.FormatCasual(prev_time,true)@ (@prev_time@f)
+  :
+    >`@x@,4,@color_grading[5]@,Prev -
+
+  // Current
+  ?totaltime < loc.bestTime | loc.bestTime <= 0
+    >`@x@,5,@color_grading[0]@,Time @time.FormatCasual(totaltime,true)@ (@totaltime@f)
+  :?totaltime < loc.averageTime
+    >`@x@,5,@color_grading[1]@,Time @time.FormatCasual(totaltime,true)@ (@totaltime@f)
+  :?totaltime < loc.averageTime + 150
+    >`@x@,5,@color_grading[2]@,Time @time.FormatCasual(totaltime,true)@ (@totaltime@f)
+  :
+    >`@x@,5,@color_grading[3]@,Time @time.FormatCasual(totaltime,true)@ (@totaltime@f)
+
+  ?current_time < totaltime
+    current_time = totaltime
+
+// ====== Treasure tracking ======
+// var treasure_count = 0
+// var treasure_remaining_time = 0
+// var treasure_cap = 400
+
+// var event_location = "boiling"
+
+// ?loc.stars >= 1 & !loc.isQuest
+//   ?loc.loop
+//     ?loc.stars >= 5 & (loc.name = caves of fear | loc.name = event_location)
+//       treasure_count = treasure_count + 2
+//     :
+//       treasure_count++
+
+//   ?loc.begin | loc.loop
+//     ?treasure_count < math.FloorToInt(treasure_cap * 0.25)
+//       >`Loot @treasure_count@/@treasure_cap@
+
+
+/* ===== Begin: tracking/red-nosed-scotty.txt ===== */
+// RedNosedScotty v1.2
+
+//   Written By: qbodp (Refer code: BBGG)
+
+//   Inspired from: FreeChestTracker v1.1.1
+//     Cancerorus Potatoes (Discord: 10100111001)
+
+//   Description:
+//     "Skully the Red-Nosed Skull" hid the chest!
+
+//   To Use:
+//     Mobile user?
+//     Simply "Copy-Paste" script!
+
+//     Importing?
+//     Simply "import ...", example:
+//       import RedNosedScotty
+//     If @rnsMobile@ is turned OFF:
+//       var rednose = import RedNosedScotty
+//       rednose.RedNose()
+
+//     x-ray mode?
+//     Turn ON @rnsxray@ under "Customisation".
+
+//   Depends On:
+//     Nothing.
+
+//   What it does:
+//     • Gives skull hiding the chest a red nose.
+//     • Should work on most screen resolutions.
+
+/*===============
+  Changelog
+  v1.0  Gives the skull with chest a red nose.
+  v1.1  Avoids (all?) dialog disruptions.
+  v1.2  Added "Copy-Paste" Easy Activation.
+===============*/
+/*===============
+  ToDo
+  • Prevent disturbance from skull switch
+    after 1st correct guess.
+===============*/
+
+/*===============
+  Customisation
+===============*/
+
+// "Copy-Paste" easy Active
+// "1" to turn ON
+// "0" to turn OFF
+var rnsMobile = 1
+
+/* skull mouth position, dialog box detection
+   and matching indicator */
+// "1" to turn ON
+// "0" to turn OFF
+var rnsxray = 0
+
+// skull nose offsets
+// (skull’s mouth must be right under the nose)
+var rnsxo = 0 // x offset
+var rnsyo = 0 // y offset
+
+/*===================
+  End Customisation
+===================*/
+
+// dialog box related vars
+//// dialog box char
+var rnsdh = "─" // speech bubble horizontal bar
+var rnsda = "." // speech bubble "arrow"
+//// dialog box matching
+var rnsdm = 9 // height to check
+var rnsdb = 0 // having dialog box?
+// skull related vars
+//// skully mouth char
+var rnsm1 = "." // small skull mouth
+var rnsm2 = "." // Scotty's mouth
+var rnsm3 = "." // Scotty's Jaw 1
+var rnsm4 = "." // Scotty's Jaw 2
+//// screen middle pos
+var rnsxmid = screen.w/2
+var rnsymid = screen.h/2
+//// skully mth pos
+var rnsxl
+var rnsyl
+var rnsxm
+var rnsym
+var rnsxr
+var rnsyr
+//// skully mth matching
+var rnsml
+var rnsmlb
+var rnsmm
+var rnsmmb
+var rnsmr
+var rnsmrb
+// chest related vars
+//// chest pos
+var posc = 2
+//// check if swapped
+var poscswapped = 1
+
+// "Copy-Paste" Easy Activation.
+?rnsMobile = 1
+  RedNose()
+
+func RedNose()
+  ?loc="undead_crypt_intro"&pos.x>=52
+    // get skully mouth pos
+    rnsxl = rnsxmid-4+rnsxo
+    rnsyl = rnsymid-9+rnsyo
+    rnsxm = rnsxmid+2+rnsxo
+    rnsym = rnsymid-6+rnsyo
+    rnsxr = rnsxmid+8+rnsxo
+    rnsyr = rnsymid-3+rnsyo
+    // get skully mouth symbol
+    ?rnsm1="."&rnsm2="."&screen.x>=69
+      rnsda = draw.GetSymbol(rnsxr+1, rnsyr)
+      rnsm1 = draw.GetSymbol(rnsxr, rnsyr)
+      rnsm2 = draw.GetSymbol(rnsxm, rnsym)
+      rnsm3 = draw.GetSymbol(rnsxm-1, rnsym)
+    // get symbol at mouth pos
+    rnsml = draw.GetSymbol(rnsxl, rnsyl)
+    rnsmm = draw.GetSymbol(rnsxm, rnsym)
+    rnsmr = draw.GetSymbol(rnsxr, rnsyr)
+    // Check mouth pos is @rnsm1@ / @rnsm2@.
+    ?rnsml=rnsm1|rnsml=rnsm2
+      rnsmlb = 1
+    :
+      rnsmlb = 0
+    ?rnsmm=rnsm1|rnsmm=rnsm2
+      rnsmmb = 1
+    :
+      rnsmmb = 0
+    ?rnsmr=rnsm1|rnsmr=rnsm2
+      rnsmrb = 1
+    :
+      rnsmrb = 0
+    // Show mouth present
+    ?rnsxray=1
+      ?rnsmlb = 1
+        draw.Bg(rnsxl, rnsyl, "#00FF00")
+      ?rnsmmb = 1
+        draw.Bg(rnsxm, rnsym, "#00FF00")
+      ?rnsmrb = 1
+        draw.Bg(rnsxr, rnsyr, "#00FF00")
+    // check for dialog box
+    rnsdb = 0 // resetting to "no dialog box"
+    ?rnsml=rnsm3|rnsml=rnsm4
+      rnsdb = 1
+      ?rnsxray=1
+        draw.Bg(rnsxl, rnsyl, "#00FF00")
+    :?rnsmm=rnsm3|rnsmm=rnsm4
+      rnsdb = 1
+      ?rnsxray=1
+        draw.Bg(rnsxm, rnsym, "#00FF00")
+    :?rnsmr=rnsm3|rnsmr=rnsm4
+      rnsdb = 1
+      ?rnsxray=1
+        draw.Bg(rnsxr, rnsyr, "#00FF00")
+    :
+      for dlgi = 2..rnsdm
+        ?rnsml=rnsm2
+          ?rnsda=
+          ^draw.GetSymbol(rnsxl-1,rnsyl+dlgi)|
+          ^rnsdh=
+          ^draw.GetSymbol(rnsxl-1,rnsyl+dlgi)
+            rnsdb = 1
+            ?rnsxray=1
+              draw.Bg(rnsxl-1,rnsyl+dlgi,
+              ^"#00FF00")
+        :?rnsmm=rnsm2
+          ?rnsda=
+          ^draw.GetSymbol(rnsxm-1,rnsym+dlgi)|
+          ^rnsdh=
+          ^draw.GetSymbol(rnsxm-1,rnsym+dlgi)
+            rnsdb = 1
+            ?rnsxray=1
+              draw.Bg(rnsxm-1,rnsym+dlgi,
+              ^"#00FF00")
+        :?rnsmr=rnsm2
+          ?rnsda=
+          ^draw.GetSymbol(rnsxr-1,rnsyr+dlgi)|
+          ^rnsdh=
+          ^draw.GetSymbol(rnsxr-1,rnsyr+dlgi)
+            rnsdb = 1
+            ?rnsxray=1
+              draw.Bg(rnsxr-1,rnsyr+dlgi,
+              ^"#00FF00")
+    // no scotty dialog box onscreen
+    ?rnsdb = 0
+      // check ready to swap @posc@
+      ?rnsmlb=1&rnsmmb=1&rnsmrb=1
+        poscswapped = 0
+      // get initial @posc@
+      :?rnsmlb=0&rnsmmb=1&rnsmrb=1
+        posc = 1
+      :?rnsmlb=1&rnsmmb=0&rnsmrb=1
+        posc = 2
+      :?rnsmlb=1&rnsmmb=1&rnsmrb=0
+        posc = 3
+      // check head swaps &
+      // get new @posc@
+      :?rnsmlb=1&rnsmmb=0&rnsmrb=0
+        ?poscswapped = 0
+          ?posc = 2
+            posc = 3
+          :?posc = 3
+            posc = 2
+          poscswapped = 1
+      :?rnsmlb=0&rnsmmb=0&rnsmrb=1
+        ?poscswapped = 0
+          ?posc = 1
+            posc = 2
+          :?posc = 2
+            posc = 1
+          poscswapped = 1
+    // show @posc@
+    ?posc = 1
+      draw.Bg(rnsxl, rnsyl-1, "#FF0000")
+    :?posc = 2
+      draw.Bg(rnsxm, rnsym-1, "#FF0000")
+    :?posc = 3
+      draw.Bg(rnsxr, rnsyr-1, "#FF0000")
+
+
+/* ===== Begin: skins/wavy-scarf.txt ===== */
+var scarfColor = #rainbow
+
+var interval = 3
+var total_sprites = 4
+var total_time = total_sprites * interval
+
+var bigScarfFrame1 = ",-._.-="
+var bigScarfFrame2 = "-._.-.="
+var bigScarfFrame3 = "._.-._="
+var bigScarfFrame4 = "_.-._.="
+var smallScarfFrame1 = "_.."
+var smallScarfFrame2 = ".-."
+var smallScarfFrame3 = "-._"
+var smallScarfFrame4 = "._."
+var _time
+var _bighead = bighead
+
+ScarfMain()
+
+/* ===== Begin: skins/shadow.txt ===== */
+var interval = 3
+var total_sprites = 4
+var total_time = total_sprites * interval
+
+var cloakc
+cloakc = #rainbow
+
+var interval = 3
+var total_sprites = 4
+var total_time = total_sprites * interval
+
+?time % total_time < interval
+  >h-6,3,@cloakc@,-._
+:?time % total_time < interval * 2
+  >h-6,3,@cloakc@,._.
+:?time % total_time < interval * 3
+  >h-6,3,@cloakc@,_.-
+:?time % total_time < interval * 4
+  >h-6,3,@cloakc@,.-.
+
+>h-3,-2,#rainbow,ascii
+##__
+/¯, '
+`\###)
+##^#^
+#/###
+/´###)
+¯###¯
+asciiend
+
+
+>h-4,0,#rainbow,ascii
+☆
+asciiend
+
+>h0,1,#rainbow,ascii
+Φ
+asciiend
+
+
+/* ===== Begin: skins/pet-skully.txt ===== */
+// Pet Skully
+// by: Newominus
+// v1.4
+// -Requires big head mode for boss kill victory chest animation and emotes
+//Based on PetFrog by StandardCombo
+
+// Place inside cosmetics folder and import with stonescript using "import Cosmetics/PetSkully"
+// Features your very own pet skully with swappable chests and customisable movement trails!
+
+var skullColor //the color the skull is
+var chestType //how the chest looks
+var cloudType //how the movement cloud looks
+var chestColor //the color the chest is
+var cloudColor //cloud movement trail color
+var clouderColor //cloud movement trail color on the last few frames
+var sparkColor //spark movement trail color
+var sparkerColor //spark movement trail color on the last few frames
+var wingColor //wing movement trail color
+var chesttrailColor //chest movement trail color
+var chesttrailerColor //chest movement trail color
+
+//CHOOSE YOUR SKULL COLOR--------------------------------<
+skullColor = #808080   //grey
+
+//CHOOSE YOUR CHEST---------------------------------------<
+//Replace with one below: bone | delta
+chestType = bone
+
+//CHOOSE YOUR MOVEMENT TRAIL--------------------------------<
+//Replace with one below: cloud | sparks | wings | chesttrail
+cloudType = cloud
+
+//CHOOSE YOUR AFTER-EFFECT COLOR--------------------------------<
+cloudColor = #808080   //grey
+clouderColor = #2e2e2e //grey but darker
+sparkColor = #white    //white
+sparkerColor = #808080 //grey
+wingColor = #yellow
+chesttrailColor = #white
+chesttrailerColor = #808080
+
+?chestType = bone
+  chestColor = #white
+:?chestType = delta
+  chestColor = #rainbow
+
+var keepDistance = -26 // distance at which the movement animation will play (stateMoving)
+var maxX = -16         // closest offset pet will get to character.  Closer to 0, closer to character
+var maxDistance = -70  // if the pet exceeds this distance, it will teleport to this distance (cannot be further away than this)
+var targetZ = -1       // We want to start the drawing 1 unit above the player agent
+
+?loc.loop
+  keepDistance = -26
+  maxX = -16
+  maxDistance = -70
+  targetZ = -1
+
+var x = 0
+var y = 0
+var myX = 0
+var myZ = 0
+var lastPlayerX = 0
+var lastPlayerZ = 0
+
+var stateNone = 0
+var stateIdle = 1
+var stateMoving = 2
+var currentState = stateNone
+var stateTime = 0
+var chestTime = 0
+
+
+func SetState(newState)
+  ?newState = stateMoving
+    play haunted_gate_shuffle //play sound when moving
+  currentState = newState
+  stateTime = 0
+
+?currentState = stateNone | time = 1
+  lastPlayerX = pos.x
+  lastPlayerZ = pos.z
+  myX = keepDistance
+  myZ = targetZ
+
+// Start further away if skully is summoned while the location is already running
+  ?time > 1
+    myX = maxDistance
+
+  SetState(stateIdle)
+
+myX = myX - (pos.x - lastPlayerX) // If player has moved, increment myX (distance from player)
+
+stateTime++
+
+?face = "( ^^" & stateTime > 30
+  chestTime++
+?face ! "( ^^"
+  chestTime = 0
+
+?currentState = stateIdle 
+  ?myX < maxDistance | myX > -maxDistance
+    myX = maxDistance
+  myZ = myZ - (pos.z - lastPlayerZ)
+
+  ?myX < keepDistance
+    SetState(stateMoving)
+
+:?currentState = stateMoving
+  ?myX < maxX
+    myX++
+
+  ?stateTime >= 6
+    ?myZ > targetZ
+      myZ--
+    :?myZ < targetZ
+      myZ++
+
+  ?stateTime >= 12
+    SetState(stateIdle)
+
+lastPlayerX = pos.x
+lastPlayerZ = pos.z
+
+//DRAW state timers--------------------------------<
+//for debugging or whatever, uncomment if you want to see
+
+//>`0,7,StateTime = @stateTime@
+//>`0,8,ChestTime = @chestTime@
+
+//IDLE---------------------------------------------<
+
+?currentState = stateIdle & face ! "( ^^" 
+  >o@myX@,@myZ@,@skullColor@,ascii
+#####
+#####
+#####
+#####,--.
+####(_o,o)
+######`"´
+asciiend
+
+/* ===== Begin: core/main.txt ===== */
+/* Dependencies inlined below: AAC, C, Colors, Debuger, HashTable, Potion, SafeMean, Tracer, Unmake */
+
+/*===================== PROGRESSION =====================*/
+func progress()
+  /*===== PICKUP RESOURCES =====*/
+  ?pickup.distance < 9
+    return equip_L("star") & equip_R("trisk")
+  /*========== SMITE ==========*/
+  ?C.long_long_smite & smite_two_screens()
+    return true
+  /*========= PASSIVE =========*/
+  ?healwalk()
+    return true
+  /*======= DODGE EXPLO =======*/
+  ?foe = explode
+    return avoid_explosion()
+  /*======= RESERVE STUN =======*/
+  ?loc = caves
+    check_stunlock()
+  /*===== REGULAR ENEMIES =====*/
+  ?!is_boss & !at_boss
+    free_mind = true
+    return regular_fight()
+  /*==== MINIBOSSES/BOSSES ====*/
+  Tracer.span("boss")
+  disable_r("skeleton_arm")
+
+  ?loc = rocky
+    ?foe_id = "acronian_scout"
+      Tracer.span("miniboss")
+      disable_r("hammer")
+      return fight_scout()
+    return fight_dysan()
+
+  :?loc = deadwood
+    return fight_xyloalgia()
+
+  :?loc = caves
+    ?is(foe_id, "cool_bat")
+      Tracer.span("miniboss")
+      ?can_stunlock & C.do_stunlock.Contains("ceiling decorator")
+        disable_r("mask")
+        disable_r("blade")
+        disable_r("bardiche")
+        return stunlock()
+      return auto_melee_miniboss()
+    :
+      return fight_bolesh()
+
+  :?loc = fungus_forest_boss
+    return fight_mushrooms()
+
+  :?loc = mushroom & is(foe_id, "epic_snail")
+    disable_r("bardiche")
+    disable_r("hammer")
+    disable_r("bash")
+    return auto_melee_miniboss()
+
+  :?loc = undead_crypt_boss
+    return fight_pallas()
+
+  :?loc = halls
+    Tracer.span("miniboss")
+    ?foe = ghost_tomb
+      return melee("dps")
+    :
+      return ranged("aoe")
+
+  :?loc = bronze_guardian
+    return fight_bronze_guardian()
+
+  :?loc = icy_ridge
+    ?foe_id = "ice_elemental_elite"
+      ?!at_boss
+        Tracer.span("miniboss")
+        ?can_stunlock & C.do_stunlock.Contains("ice elemental")
+          disable_r("mask")
+          disable_r("blade")
+          disable_r("hammer")
+          return stunlock()
+        :
+          disable_r("hammer")
+          return auto_melee_miniboss()
+      :
+        return ranged("aoe")
+    return fight_hrimnir()
+
+  :?loc = temple & is(foe_id, "acronian_cultist")
+    Tracer.span("miniboss")
+    excluded_items = "vigor"
+    return auto_melee_miniboss()
+
+  :?loc = nagaraja
+    return fight_nagaraja()
+
+  :
+    Debugger.handle("Fighting unknown boss: " + foe_id)
+    auto_melee_boss()
+
+func healwalk()
+  Tracer.span("healwalk")
+  ?foe & (foe_distance < 23)
+    ?hp < (maxhp / 4) & item.potion ! empty & (item.potion = "healing" | item.potion = "vampiric")
+      activate potion
+    return false // Start combat instead.
+  :?C.harvesting & harvest.distance < 3 & _harvest()
+    return true
+  :?should_summon()
+    return equip_L("trisk") & summon()
+  :?can_qs_dash()
+    return qs_dash()
+  auto_equip_shield()
+  ?hp < maxhp & !lucky_crit
+    return equip_L("ouroboros")
+  return equip_L("trisk")
+
+// `harvest` is a reserved keyword :(.
+func _harvest()
+  ?loc = Rocky
+    return equip_L("shovel")
+  :?loc = Deadwood
+    equip_R("hatchet")
+    ?harvest.distance < 2
+      use("hatchet")
+    return true
+  return false
+
+func avoid_explosion()
+  Tracer.span("explode")
+  ?foe_distance < 5
+    return try_evade()
+  return auto_equip_L("melee", false) & equip_R("dashing")
+
+var scrolling = 0
+func smite_two_screens()
+  var cd_ok = get_cd("blade") <= 0
+  ?cd_ok & foe_count > 3
+    scrolling++
+    screen.Next()
+  :
+    scrolling = 0
+    screen.ResetOffset()
+  ?foe_ehp < 600 & foe_ehp > 0 & cd_ok & foe_distance < 25 & (foe_count > 5 | scrolling > 15)
+    return smite()
+  return scrolling > 0
+
+/* ===== Begin: core/logic/aac.txt ===== */
+/*
+  Credit to Ket from the discord for helping me with this.
+
+  With the newly exposed property `state`, AAC is now way more simple (no more modulos or frame calculations).
+  There is two way to handle it. The first one, if put at the very bottom of the loop, should be done as follow:
+  ```
+  ?item.left.state = 3
+    equipL wand *0 //junk
+    equipL @item.left@
+  ?item.right.state = 3
+    equipR shield *0 //junk
+    equip @item.right@
+  ```
+  While more permissive, it is less efficient as the following one, that should be put a the very top of the loop.
+  It assumes the equip logic is set up to re-equip stuff every frame if something has changed instead of
+  leaving whatever was equipped last. (i.e. you need to avoid any logic holes where nothing gets equipped that frame,
+  otherwise you end up with junk in your hand)
+*/
+func handle()
+  ?item.left.state = 3
+    equipL wand *0 // Junk item for the swap.
+  ?item.right.state = 3
+    equipR shield *0 // Junk item for the swap.
+
+/* ===== Begin: core/variables/constants.txt ===== */
+// TODO:
+// - Big Vigor Sword from event, what to do with it?
+// - Towering shield
+
+/*===================== GEAR =====================*/
+var max_armor_compound_shield = "compound +21 golden"
+var speed_armor_compound_shield = "compound +12 shiny"
+var evade_shield = "vigor shield ah+21"
+var stunlock_weapons=["stone hammer +11"]
+var qs_name="Speed Hack"
+var elemental_items=[
+  ["hammer",
+    ["aether","D+21","D+13"],
+    ["poison","D+21","D+15"],
+    ["vigor","D+12","D+11"],
+    ["fire","D+12","D+11"],
+    ["ice","D+14","D+11"],
+    ["default",
+      "poison hammer D+21","aether hammer D+21","ice hammer D+14"
+    ],
+  ],
+  ["wand",
+    ["fire","D+11"],
+    ["default","fire wand D+11"],
+  ],
+  ["staff",
+    ["ice","dI+20"],
+    ["aether","dU+20"],
+    ["default","ice staff dI+20","aether staff dU+20","The Ghost Slayer! +11"],
+  ],
+  ["crossbow",
+    ["aether","D+21"],
+    ["fire","D+16"],
+    ["ice","D+21"],
+    ["poison","D+11"],
+    ["vigor","D+11"],
+    ["default","eather crossbow D+21","Repeating Crossbow +18"],
+  ],
+  ["sword",
+    ["aether","D+20","D+13"],
+    ["fire","D+21","D+20","dF+13"],
+    ["ice","D+20","D+13","dI+20"],
+    ["poison","D+20","D+13","dP+13"],
+     // TODO: Use name `BloodSucker` for first +21 to fix not being able to use both.
+    ["vigor","D+21","D+20","BloodSucker","dL+21"],
+    ["default",
+      "vigor sword D+21","fire sword D+21","aether sword D+20",
+      "poison sword D+20", "ice sword D+20", "vigor sword BloodSucker", "vigor sword dL+21",
+    ],
+  ],
+  ["shield",
+    ["vigor","A+19"],
+    ["poison","A+11"],
+    ["ice","A+11"],
+    ["fire","A+21"],
+    ["aether","A+11"],
+    ["default",
+      speed_armor_compound_shield,max_armor_compound_shield,
+      evade_shield
+    ],
+  ],
+]
+
+/*==================== GENERAL ====================*/
+var speed_armor_coumpound_threshold = 14
+var aoe_threshold = 4
+var low_hp_threshold = 1
+var use_shield_on_low_hp = false
+var harvesting = false
+var unmake_range = "ranged"
+
+/*==================== DEBUFF ====================*/
+var max_chill_stacks = 6
+var do_stunlock = ["poena","ceiling decorator"]
+var debuff_bosses_mode = "smite"
+var debuff_non_bosses_mode = "smite"
+var do_debuff_damage = [
+  "dysangelos_bearer",
+  "dysangelos_elementalist",
+  "dysangelos_perfected",
+  ]
+
+/*=================== ABILITIES ===================*/
+var useable_abilities = [
+  "dash","bash","mask","blade","hammer",
+  "fire_talisman","quarterstaff","cinderwisp",
+  "bardiche"
+]
+var max_ignition_stacks = 10
+var cinderwisp_dmg = 124
+var smite_threshold = 7
+var smite_damage = 105
+var long_long_smite = true
+var heavy_hammer_frames = 14
+var bardiche_frames = 22
+var fire_talisman_frames = 20
+
+/*===================== MELEE =====================*/
+var for_melee_single_target = ["sword","hammer"]
+var for_melee_aoe = ["arm"]
+var melee_range = 5
+var arm_damage = 80
+var max_pickpocket_stacks = 6
+var bardiche_dmg = 52 * (13.5 + 2)
+
+/*===================== RANGED =====================*/
+var must_ranged_foes = ["wasp","wasp nest","mosquito","huge mosquito"]
+var for_ranged_single_target = ["crossbow","repeating","wand"]
+var for_ranged_aoe = ["staff","wand"]
+var for_phys_immune = ["staff","wand"]
+
+/*===================== DEBUG =====================*/
+var ui_show_cd = true
+var ui_show_statuses = true
+var ui_show_debug = true
+var enable_hit_tracking = false
+
+/* ===== Begin: core/utils/colors.txt ===== */
+func cd(cooldown)
+  ?cooldown > 0
+    return "red"
+  return "green"
+
+var grey = "#7A8F93"
+
+/* ===== Begin: observability/debugger.txt ===== */
+/* constants inlined above */
+
+var enable_debugger = true
+var errors = []
+
+func handle(error)
+  ?C.ui_show_debug
+    ?!errors.Contains(error)
+      errors.Add(error)
+
+func display(y)
+  ?!enable_debugger
+    return
+  for err : errors
+    >`20,@ey@,#red,@err@
+    ey++
+
+func panic(e)
+  >`20,5,#red,@e@
+  loc.Pause()
+
+/* ===== Begin: core/utils/hash-table.txt ===== */
+/* Debugger inlined above */
+
+func try_get(dict, k, default)
+  var idx = dict.IndexOf(k)
+  ?idx = -1
+    return default
+  return dict[idx + 1]
+
+func get(dict, k)
+  var idx = dict.IndexOf(k)
+  ?idx = -1
+    Debugger.panic("Bad dict key: k=" + k)
+  return dict[idx + 1]
+
+func set(dict, k, v)
+  var idx = dict.IndexOf(k)
+  ?idx = -1
+    dict.Add(k)
+    dict.Add(v)
+  :
+    dict[idx + 1] = v
+  return true
+
+/* ===== Begin: core/logic/potion.txt ===== */
+/* constants and tracer inlined above */
+
+var should_use = true
+var fast_potion_bosses = ["mushrooms","bronze","pallas"]
+
+func create()
+  ?should_use
+    ?loc = Mine
+      brew stone // Strength.
+    :?loc = Mushroom | loc = Halls | loc = Deadwood | loc = Caves
+      brew wood + bronze // Berserk.
+    :?loc = Temple | loc = Rocky | loc = Ridge
+      brew stone + bronze // Lucky.
+  :?item.potion = empty
+    brew tar + bronze // Vampiric.
+
+func try_drink()
+  ?loc = bronze_guardian & item.potion = "strength"
+    Tracer.span("drink")
+    activate potion
+  ?should_use & (item.potion="berserk" | item.potion="lucky") & foe.distance <= C.melee_range
+    Tracer.span("drink")
+    activate potion
+  return true
+
+/* ===== Begin: core/logic/safe-mean.txt ===== */
+var _enable = false
+var extra_frames = 10
+
+func handle()
+  ?_enable
+    ?((loc.averageTime + extra_frames) < totaltime & pickup.distance > 20) & loc.averageTime > 0
+      loc.Leave()
+
+/* ===== Begin: observability/tracer.txt ===== */
+var enable_tracer = true
+var block_width = 45
+
+var spans = []
+
+func span(tag)
+  ?enable_tracer
+    spans.Add(tag)
+
+func display()
+  ?!enable_tracer
+    return
+  var trace = string.Break(string.Join(",", spans), block_width)
+  var trace_y = 2
+
+  for current_span : trace
+    >`20,@trace_y@,#blue,@current_span@
+    trace_y++
+
+/* ===== Begin: core/logic/unmake.txt ===== */
+var threshold = 800
+
+func should_unmake()
+  return threshold > 0 & foe ! boss & foe.maxhp >= threshold
+
+func ScarfMain()
+  _time = time
+  ?_bighead
+    //bighead
+    ?_time % total_time < interval
+      >h-6,1,@scarfColor@,@bigScarfFrame1@
+    :?_time % total_time < interval * 2
+      >h-6,1,@scarfColor@,@bigScarfFrame2@
+    :?_time % total_time < interval * 3
+      >h-6,1,@scarfColor@,@bigScarfFrame3@
+    :?_time % total_time < interval * 4
+      >h-6,1,@scarfColor@,@bigScarfFrame4@
+  :
+    //non-bighead
+    ?_time % total_time < interval
+      >h-4,1,@scarfColor@,@smallScarfFrame1@
+    :?_time % total_time < interval * 2
+      >h-4,1,@scarfColor@,@smallScarfFrame2@
+    :?_time % total_time < interval * 3
+      >h-4,1,@scarfColor@,@smallScarfFrame3@
+    :?_time % total_time < interval * 4
+      >h-4,1,@scarfColor@,@smallScarfFrame4@
